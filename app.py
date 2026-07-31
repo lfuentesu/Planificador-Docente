@@ -19,6 +19,19 @@ st.set_page_config(
     page_title="Planificador y Asistente Docente", page_icon="📚", layout="wide"
 )
 
+# Diccionario de ejemplos automáticos según la asignatura seleccionada
+EJEMPLOS_OBJETIVOS = {
+    "Matemáticas": "Suma y resta de fracciones con distinto denominador",
+    "Lengua y Literatura / Lenguaje": "Comprensión lectora y análisis de personajes en mitos grecolatinos",
+    "Historia, Geografía y Ciencias Sociales": "Causas y consecuencias del proceso de Independencia de Chile",
+    "Ciencias Naturales (Biología, Física, Química)": "Estructura de la célula eucariota y función de sus organelos",
+    "Inglés": "Uso del presente simple y continuo para describir rutinas diarias",
+    "Artes Visuales / Música": "Elementos del lenguaje visual: color, línea y textura en obras impresionistas",
+    "Tecnología": "Diseño de un prototipo de solución a un problema medioambiental local",
+    "Educación Física y Salud": "Desarrollo de cualidades físicas básicas mediante juegos colectivos",
+    "Orientación": "Promoción del respeto y la resolución pacífica de conflictos en la comunidad escolar",
+}
+
 
 def generar_planificacion_ia(
     groq_api_key, nivel, asignatura, tipo_planificacion, enfoque, observaciones
@@ -32,7 +45,7 @@ def generar_planificacion_ia(
     Tu objetivo es redactar planificaciones pedagógicas altamente estructuradas, rigurosas, claras y listas para ser implementadas por los docentes en el aula.
 
     Asegúrate de incluir siempre:
-    1. **Objetivo de Aprendizaje (OA)** y/o Habilidad principal adaptado al curso específico.
+    1. **Objetivo de Aprendizaje (OA)** y/o Habilidad principal adaptado al curso y asignatura específicos.
     2. **Indicadores de Evaluación** específicos.
     3. **Estructura de la Clase:**
        - **Inicio (15 min):** Activación de conocimientos previos, conflicto cognitivo y declaración del objetivo.
@@ -118,6 +131,9 @@ def mostrar_seccion_planificaciones(groq_api_key):
             ],
         )
 
+    # Obtener el ejemplo sugerido de acuerdo a la asignatura seleccionada
+    ejemplo_sugerido = EJEMPLOS_OBJETIVOS.get(asignatura, "Escribe aquí el objetivo...")
+
     with col2:
         tipo_planificacion = st.selectbox(
             "Tipo de Planificación:",
@@ -129,7 +145,8 @@ def mostrar_seccion_planificaciones(groq_api_key):
         )
         enfoque = st.text_input(
             "Objetivo o Contenido Específico:",
-            placeholder="Ej: Suma y resta de fracciones homogéneas / Análisis de mitos grecolatinos",
+            placeholder=f"Ej: {ejemplo_sugerido}",
+            help=f"Sugerencia para {asignatura}: {ejemplo_sugerido}",
         )
 
     observaciones = st.text_area(
@@ -147,11 +164,11 @@ def mostrar_seccion_planificaciones(groq_api_key):
             )
         elif not enfoque.strip():
             st.warning(
-                "Por favor ingresa un objetivo o contenido específico antes de generar la planificación."
+                f"Por favor ingresa un objetivo o contenido para la asignatura de **{asignatura}** antes de generar la planificación."
             )
         else:
             with st.spinner(
-                "Generando propuesta pedagógica con Llama 3.3... Esto tomará unos segundos."
+                f"Generando propuesta pedagógica de {asignatura} para {nivel}... Esto tomará unos segundos."
             ):
                 try:
                     resultado_planificacion = generar_planificacion_ia(
@@ -185,7 +202,7 @@ def main():
     )
 
     st.sidebar.markdown("---")
-    st.sidebar.caption("🤖 **Planificador Docente v1.1**")
+    st.sidebar.caption("🤖 **Planificador Docente v1.2**")
     st.sidebar.caption("Chile — Marco MINEDUC & Normativa Laboral")
 
     # Renderizado condicional según la selección del usuario
