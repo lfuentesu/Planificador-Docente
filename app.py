@@ -20,7 +20,9 @@ st.set_page_config(
 )
 
 
-def generar_planificacion_ia(groq_api_key, nivel, asignatura, tipo_planificacion, enfoque, observaciones):
+def generar_planificacion_ia(
+    groq_api_key, nivel, asignatura, tipo_planificacion, enfoque, observaciones
+):
     """Llama a la API de Groq para generar una planificación pedagógica detallada."""
     client = Groq(api_key=groq_api_key)
 
@@ -30,12 +32,12 @@ def generar_planificacion_ia(groq_api_key, nivel, asignatura, tipo_planificacion
     Tu objetivo es redactar planificaciones pedagógicas altamente estructuradas, rigurosas, claras y listas para ser implementadas por los docentes en el aula.
 
     Asegúrate de incluir siempre:
-    1. **Objetivo de Aprendizaje (OA)** y/o Habilidad principal.
+    1. **Objetivo de Aprendizaje (OA)** y/o Habilidad principal adaptado al curso específico.
     2. **Indicadores de Evaluación** específicos.
     3. **Estructura de la Clase:**
        - **Inicio (15 min):** Activación de conocimientos previos, conflicto cognitivo y declaración del objetivo.
        - **Desarrollo (60 min):** Modelaje, práctica guiada y práctica independiente con actividades concretas.
-       - **Cierre (15 min):** Sintesis de aprendizajes y ticket de salida/evaluación formativa.
+       - **Cierre (15 min):** Síntesis de aprendizajes y ticket de salida/evaluación formativa.
     4. **Sugerencia de Diversificación (DUA):** Adecuaciones para atender a la diversidad en el aula.
     5. **Recursos Sugeridos.**
 
@@ -44,7 +46,7 @@ def generar_planificacion_ia(groq_api_key, nivel, asignatura, tipo_planificacion
 
     prompt_usuario = f"""
     Genera una propuesta de planificación con los siguientes parámetros:
-    - **Nivel / Curso:** {nivel}
+    - **Nivel / Curso Específico:** {nivel}
     - **Asignatura:** {asignatura}
     - **Tipo de Planificación:** {tipo_planificacion}
     - **Tema / Objetivo Específico:** {enfoque}
@@ -78,13 +80,27 @@ def mostrar_seccion_planificaciones(groq_api_key):
         nivel = st.selectbox(
             "Selecciona el Nivel / Curso:",
             [
-                "Educación Parvularia",
-                "1° a 4° Básico",
-                "5° y 6° Básico",
-                "7° y 8° Básico",
-                "1° y 2° Medio",
-                "3° y 4° Medio (Formación General)",
-                "3° y 4° Medio (TTP / Diferenciado)",
+                # Educación Parvularia
+                "Prekínder (NT1)",
+                "Kínder (NT2)",
+                # Educación Básica
+                "1° Básico",
+                "2° Básico",
+                "3° Básico",
+                "4° Básico",
+                "5° Básico",
+                "6° Básico",
+                "7° Básico",
+                "8° Básico",
+                # Educación Media
+                "1° Medio",
+                "2° Medio",
+                "3° Medio (Formación General)",
+                "3° Medio (TTP / Técnico Profesional)",
+                "4° Medio (Formación General)",
+                "4° Medio (TTP / Técnico Profesional)",
+                # Educación de Adultos
+                "EPJA / Educación de Adultos",
             ],
         )
         asignatura = st.selectbox(
