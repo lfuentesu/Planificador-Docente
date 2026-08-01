@@ -1,5 +1,8 @@
+import io
 import os
 import streamlit as st
+from docx import Document
+from docx.shared import Pt, Inches, RGBColor
 from dotenv import load_dotenv
 from groq import Groq
 
@@ -77,6 +80,96 @@ def generar_planificacion_ia(
     )
 
     return respuesta.choices[0].message.content
+
+
+def crear_documento_word(
+    nivel, asignatura, tipo_planificacion, enfoque, observaciones, contenido
+):
+    """Crea un archivo Word (.docx) formateado con la planificación."""
+    doc = Document()
+
+    # Título principal del documento
+    p_titulo = doc.add_paragraph()
+    run_titulo = p_titulo.add_run("PROPUESTA DE PLANIFICACIÓN PEDAGÓGICA")
+    run_titulo.bold = True
+    run_titulo.font.size = Pt(16)
+    run_titulo.font.color.rgb = RGBColor(0, 51, 102)
+    p_titulo.paragraph_format.space_after = Pt(12)
+
+    # Tabla con metadatos de la planificación
+    tabla = doc.add_table(rows=4, cols=2)
+    tabla.style = "Table Grid"
+
+    datos = [
+        ("Nivel / Curso:", nivel),
+        ("Asignatura:", asignatura),
+        ("Tipo de Planificación:", tipo_planificacion),
+        ("Tema / Enfoque:", enfoque),
+    ]
+
+    for i, (campo, valor) in enumerate(datos):
+        cell_label = tabla.cell(i, 0)
+        cell_value = tabla.cell(i, 1)
+
+        p_label = cell_label.paragraphs[0]
+        run_l = p_label.add_run(campo)
+        run_l.bold = True
+        run_l.font.size = Pt(10)
+
+        p_val = cell_value.paragraphs[0]
+        run_v = p_val.add_run(valor)
+        run_v.font.size = Pt(10)
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(12)
+
+    if observaciones.strip():
+        p_obs = doc.add_paragraph()
+        run_o_title = p_obs.add_run("Consideraciones especiales: ")
+        run_o_title.bold = True
+        p_obs.add_run(observaciones)
+        p_obs.paragraph_format.space_after = Pt(12)
+
+    # Encabezado del contenido
+    p_sub = doc.add_paragraph()
+    run_sub = p_sub.add_run("Desarrollo de la Planificación")
+    run_sub.bold = True
+    run_sub.font.size = Pt(13)
+    run_sub.font.color.rgb = RGBColor(0, 51, 102)
+    p_sub.paragraph_format.space_after = Pt(8)
+
+    # Agregar líneas de texto
+    for linea in contenido.split("\n"):
+        linea_str = linea.strip()
+        if not linea_str:
+            continue
+
+        p = doc.add_paragraph()
+        if linea_str.startswith("# "):
+            run = p.add_run(linea_str.replace("# ", ""))
+            run.bold = True
+            run.font.size = Pt(14)
+            run.font.color.rgb = RGBColor(0, 51, 102)
+        elif linea_str.startswith("## "):
+            run = p.add_run(linea_str.replace("## ", ""))
+            run.bold = True
+            run.font.size = Pt(12)
+            run.font.color.rgb = RGBColor(0, 51, 102)
+        elif linea_str.startswith("### "):
+            run = p.add_run(linea_str.replace("### ", ""))
+            run.bold = True
+            run.font.size = Pt(11)
+        elif linea_str.startswith("- ") or linea_str.startswith("* "):
+            p.style = "List Bullet"
+            texto_limpio = linea_str[2:].replace("**", "")
+            p.add_run(texto_limpio)
+        else:
+            texto_limpio = linea_str.replace("**", "")
+            p.add_run(texto_limpio)
+
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return buffer
 
 
 def mostrar_seccion_planificaciones(groq_api_key):
@@ -179,13 +272,54 @@ def mostrar_seccion_planificaciones(groq_api_key):
                         enfoque,
                         observaciones,
                     )
+
+                    # Guardar en la sesión de Streamlit para que no se pierda al interactuar
+                    st.session_state["resultado_planificacion"] = (
+                        resultado_planificacion
+                    )
+                    st.session_state["datos_planificacion"] = {
+                        "nivel": nivel,
+                        "asignatura": asignatura,
+                        "tipo": tipo_planificacion,
+                        "enfoque": enfoque,
+                        "observaciones": observaciones,
+                    }
                     st.success("¡Planificación generada con éxito!")
-                    st.markdown("### 📄 Propuesta Pedagógica")
-                    st.markdown(resultado_planificacion)
+
                 except Exception as e:
                     st.error(
                         f"Ocurrió un error al generar la planificación mediante IA: {e}"
                     )
+
+    # Si ya hay un resultado generado en sesión, mostrarlo y ofrecer el botón de descarga
+    if "resultado_planificacion" in st.session_state:
+        st.markdown("### 📄 Propuesta Pedagógica")
+        st.markdown(st.session_state["resultado_planificacion"])
+
+        st.markdown("---")
+        datos = st.session_state["datos_planificacion"]
+
+        # Generar el archivo Word en memoria
+        archivo_word = crear_documento_word(
+            datos["nivel"],
+            datos["asignatura"],
+            datos["tipo"],
+            datos["enfoque"],
+            datos["observaciones"],
+            st.session_state["resultado_planificacion"],
+        )
+
+        nombre_archivo = f"Planificacion_{datos['asignatura']}_{datos['nivel']}.docx".replace(
+            " ", "_"
+        )
+
+        st.download_button(
+            label="📥 Descargar Planificación en Word (.docx)",
+            data=archivo_word,
+            file_name=nombre_archivo,
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            type="primary",
+        )
 
 
 def main():
@@ -202,7 +336,7 @@ def main():
     )
 
     st.sidebar.markdown("---")
-    st.sidebar.caption("🤖 **Planificador Docente v1.2**")
+    st.sidebar.caption("🤖 **Planificador Docente v1.3**")
     st.sidebar.caption("Chile — Marco MINEDUC & Normativa Laboral")
 
     # Renderizado condicional según la selección del usuario
