@@ -326,24 +326,42 @@ def main():
     # Obtener la API Key desde los Secrets de Streamlit o del entorno
     groq_api_key = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY", ""))
 
-    # --- CARGAR LOGO DE SUTE CHILE EN LA BARRA LATERAL ---
-    posibles_rutas_logo = [
+    # --- BÚSQUEDA EXHAUSTIVA DEL LOGO DE SUTE CHILE ---
+    posibles_rutas = [
         "logotiposute.jpg",
-        "legislacion/logotiposute.jpg",
-        "assets/logotiposute.jpg",
+        "logotiposute.JPG",
+        "logotiposute.jpeg",
+        "logotiposute.png",
         "logotposute.jpg",
+        "legislacion/logotiposute.jpg",
+        "legislacion/logotiposute.JPG",
+        "legislacion/logotiposute.jpeg",
+        "legislacion/logotiposute.png",
         "legislacion/logotposute.jpg",
+        "assets/logotiposute.jpg",
     ]
 
     logo_encontrado = False
-    for ruta in posibles_rutas_logo:
+    for ruta in posibles_rutas:
         if os.path.exists(ruta):
-            st.sidebar.image(ruta, use_column_width=True)
+            st.sidebar.image(ruta, use_container_width=True)
             logo_encontrado = True
             break
 
     if not logo_encontrado:
-        st.sidebar.info("ℹ️ Para ver el logo, asegúrate de que el archivo `logotiposute.jpg` esté subido a GitHub.")
+        # Intento de buscar cualquier archivo que contenga 'sute' en el nombre
+        for raiz, carpetas, archivos in os.walk("."):
+            for archivo in archivos:
+                if "sute" in archivo.lower() and archivo.lower().endswith((".jpg", ".jpeg", ".png")):
+                    ruta_hallada = os.path.join(raiz, archivo)
+                    st.sidebar.image(ruta_hallada, use_container_width=True)
+                    logo_encontrado = True
+                    break
+            if logo_encontrado:
+                break
+
+    if not logo_encontrado:
+        st.sidebar.warning("⚠️ No se encontró la imagen del logo en el repositorio.")
 
     # Menú de navegación en la barra lateral
     st.sidebar.title("📌 Navegación")
@@ -355,7 +373,7 @@ def main():
     )
 
     st.sidebar.markdown("---")
-    st.sidebar.caption("🤖 **Planificador Docente v1.6**")
+    st.sidebar.caption("🤖 **Planificador Docente v1.7**")
     st.sidebar.caption("Chile — Marco MINEDUC & Normativa Laboral")
 
     # Renderizado condicional según la selección del usuario
