@@ -326,6 +326,12 @@ def main():
     # Obtener la API Key desde los Secrets de Streamlit o del entorno
     groq_api_key = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY", ""))
 
+    # --- CARGAR LOGO EN LA BARRA LATERAL ---
+    if os.path.exists("logo.png"):
+        st.sidebar.image("logo.png", use_column_width=True)
+    elif os.path.exists("assets/logo.png"):
+        st.sidebar.image("assets/logo.png", use_column_width=True)
+
     # Menú de navegación en la barra lateral
     st.sidebar.title("📌 Navegación")
     st.sidebar.markdown("---")
@@ -336,7 +342,7 @@ def main():
     )
 
     st.sidebar.markdown("---")
-    st.sidebar.caption("🤖 **Planificador Docente v1.3**")
+    st.sidebar.caption("🤖 **Planificador Docente v1.4**")
     st.sidebar.caption("Chile — Marco MINEDUC & Normativa Laboral")
 
     # Renderizado condicional según la selección del usuario
