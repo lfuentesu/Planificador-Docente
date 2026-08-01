@@ -329,16 +329,21 @@ def main():
     # --- CARGAR LOGO DE SUTE CHILE EN LA BARRA LATERAL ---
     posibles_rutas_logo = [
         "logotiposute.jpg",
-        "assets/logotiposute.jpg",
         "legislacion/logotiposute.jpg",
+        "assets/logotiposute.jpg",
         "logotposute.jpg",
-        "logo.png",
+        "legislacion/logotposute.jpg",
     ]
 
+    logo_encontrado = False
     for ruta in posibles_rutas_logo:
         if os.path.exists(ruta):
-            st.sidebar.image(ruta, use_container_width=True)
+            st.sidebar.image(ruta, use_column_width=True)
+            logo_encontrado = True
             break
+
+    if not logo_encontrado:
+        st.sidebar.info("ℹ️ Para ver el logo, asegúrate de que el archivo `logotiposute.jpg` esté subido a GitHub.")
 
     # Menú de navegación en la barra lateral
     st.sidebar.title("📌 Navegación")
@@ -350,7 +355,7 @@ def main():
     )
 
     st.sidebar.markdown("---")
-    st.sidebar.caption("🤖 **Planificador Docente v1.5**")
+    st.sidebar.caption("🤖 **Planificador Docente v1.6**")
     st.sidebar.caption("Chile — Marco MINEDUC & Normativa Laboral")
 
     # Renderizado condicional según la selección del usuario
