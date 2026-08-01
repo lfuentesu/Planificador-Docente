@@ -47,15 +47,18 @@ def generar_planificacion_ia(
 
     Tu objetivo es redactar planificaciones pedagógicas altamente estructuradas, rigurosas, claras y listas para ser implementadas por los docentes en el aula.
 
-    Asegúrate de incluir siempre:
+    Asegúrate de incluir siempre las siguientes secciones bien detalladas:
+
     1. **Objetivo de Aprendizaje (OA)** y/o Habilidad principal adaptado al curso y asignatura específicos.
-    2. **Indicadores de Evaluación** específicos.
+    2. **Indicadores de Evaluación** específicos y medibles.
     3. **Estructura de la Clase:**
        - **Inicio (15 min):** Activación de conocimientos previos, conflicto cognitivo y declaración del objetivo.
-       - **Desarrollo (60 min):** Modelaje, práctica guiada y práctica independiente con actividades concretas.
-       - **Cierre (15 min):** Síntesis de aprendizajes y ticket de salida/evaluación formativa.
-    4. **Sugerencia de Diversificación (DUA):** Adecuaciones para atender a la diversidad en el aula.
-    5. **Recursos Sugeridos.**
+       - **Desarrollo (60 min):** Modelaje del docente, práctica guiada y práctica independiente con actividades concretas.
+       - **Cierre (15 min):** Síntesis de la clase.
+    4. **🎫 Ticket de Salida:** Una pregunta, ejercicio práctico o reflexión breve y concreta para aplicar en los últimos 5 minutos y verificar el aprendizaje formativo.
+    5. **📊 Instrumento de Evaluación Sugerido:** Incluye una propuesta de Pauta de Cotejo, Rúbrica Breve o Escala de Apreciación con 3 a 4 criterios para evaluar la clase/unidad.
+    6. **Sugerencia de Diversificación (DUA):** Adecuaciones concretas para atender a la diversidad en el aula.
+    7. **Recursos Pedagógicos Sugeridos.**
 
     Usa un formato Markdown limpio, profesional y bien organizado con encabezados y viñetas.
     """
@@ -76,7 +79,7 @@ def generar_planificacion_ia(
             {"role": "user", "content": prompt_usuario},
         ],
         temperature=0.4,
-        max_tokens=2200,
+        max_tokens=2500,
     )
 
     return respuesta.choices[0].message.content
@@ -178,6 +181,18 @@ def mostrar_seccion_planificaciones(groq_api_key):
     st.write(
         "Diseña planificaciones pedagógicas completas alineadas con los estándares del MINEDUC usando Inteligencia Artificial."
     )
+
+    # --- INSTRUCTIVO DE USO ---
+    with st.expander("💡 **¿Cómo utilizar este generador? (Instructivo paso a paso)**", expanded=False):
+        st.markdown(
+            """
+            1. **Selecciona el Nivel y la Asignatura:** Elige el curso exacto (desde Prekínder a 4° Medio/EPJA) y el área de aprendizaje.
+            2. **Ingresa el Tema u Objetivo:** Escribe el contenido específico que deseas trabajar en la clase (puedes guiarte por la sugerencia en pantalla).
+            3. **Agrega Consideraciones (Opcional):** Si tienes estudiantes en el Programa de Integración Escolar (PIE), dinámicas grupales o requerimientos DUA específicos, puedes anotarlos en la casilla de observaciones.
+            4. **Genera y Descarga:** Presiona el botón verde para crear la planificación. Al finalizar, podrás revisar en pantalla el **Inicio, Desarrollo, Cierre, Ticket de Salida e Instrumento de Evaluación**, y descargarlo directamente en formato **Word (.docx)**.
+            """
+        )
+
     st.markdown("---")
 
     # Contenedor principal de selección de parámetros
@@ -349,7 +364,6 @@ def main():
             break
 
     if not logo_encontrado:
-        # Intento de buscar cualquier archivo que contenga 'sute' en el nombre
         for raiz, carpetas, archivos in os.walk("."):
             for archivo in archivos:
                 if "sute" in archivo.lower() and archivo.lower().endswith((".jpg", ".jpeg", ".png")):
@@ -359,9 +373,6 @@ def main():
                     break
             if logo_encontrado:
                 break
-
-    if not logo_encontrado:
-        st.sidebar.warning("⚠️ No se encontró la imagen del logo en el repositorio.")
 
     # Menú de navegación en la barra lateral
     st.sidebar.title("📌 Navegación")
@@ -373,7 +384,7 @@ def main():
     )
 
     st.sidebar.markdown("---")
-    st.sidebar.caption("🤖 **Planificador Docente v1.7**")
+    st.sidebar.caption("🤖 **Planificador Docente v1.8**")
     st.sidebar.caption("Chile — Marco MINEDUC & Normativa Laboral")
 
     # Renderizado condicional según la selección del usuario
