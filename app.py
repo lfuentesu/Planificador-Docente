@@ -154,36 +154,45 @@ def inicializar_supabase():
             return None
     return None
 
-def generar_planificacion_ia(groq_api_key, nivel, asignatura, tipo_planificacion, enfoque, observaciones):
-    """Llama a la API de Groq para generar una planificación pedagógica detallada."""
+def generar_planificacion_ia(groq_api_key, docente, colegio, nivel, asignatura, tipo_planificacion, num_clases, enfoque, observaciones):
+    """Llama a la API de Groq para generar una planificación pedagógica o Unidad Didáctica multi-sesión."""
     client = Groq(api_key=groq_api_key)
 
-    prompt_sistema = """
+    prompt_sistema = f"""
     Eres un experto diseñador curricular y asesor pedagógico del sistema educativo chileno, con amplio conocimiento del Marco para la Buena Enseñanza, las Bases Curriculares del MINEDUC y los Decretos de Evaluación (ej. Decreto 67).
 
     Tu objetivo es redactar planificaciones pedagógicas altamente estructuradas, rigurosas, claras y listas para ser implementadas por los docentes en el aula.
 
-    Asegúrate de incluir siempre las siguientes secciones bien detalladas:
+    FORMATO SEGÚN EL TIPO DE PLANIFICACIÓN:
 
-    1. **Objetivo de Aprendizaje (OA)** y/o Habilidad principal adaptado al curso y asignatura específicos.
-    2. **Indicadores de Evaluación** específicos y medibles.
-    3. **Estructura de la Clase:**
-       - **Inicio (15 min):** Activación de conocimientos previos, conflicto cognitivo y declaración del objetivo.
-       - **Desarrollo (60 min):** Modelaje del docente, práctica guiada y práctica independiente con actividades concretas.
-       - **Cierre (15 min):** Síntesis de la clase.
-    4. **🎫 Ticket de Salida:** Una pregunta, ejercicio práctico o reflexión breve y concreta para aplicar en los últimos 5 minutos y verificar el aprendizaje formativo.
-    5. **📊 Instrumento de Evaluación Sugerido:** Incluye una propuesta de Pauta de Cotejo, Rúbrica Breve o Escala de Apreciación con 3 a 4 criterios para evaluar la clase/unidad.
-    6. **Sugerencia de Diversificación (DUA):** Adecuaciones concretas para atender a la diversidad en el aula.
-    7. **Recursos Pedagógicos Sugeridos.**
+    Si el tipo es "Clase a Clase (90 minutos)":
+    Estructura la clase en:
+    1. **Objetivo de Aprendizaje (OA)** y/o Habilidad principal.
+    2. **Indicadores de Evaluación** medibles.
+    3. **Inicio (15 min), Desarrollo (60 min), Cierre (15 min).**
+    4. **🎫 Ticket de Salida.**
+    5. **📊 Instrumento de Evaluación Sugerido.**
+    6. **Sugerencias DUA y Recursos.**
+
+    Si el tipo es "Unidad Didáctica (Secuencia Multi-Sesión)":
+    Desglosa de forma ordenada una secuencia pedagógica de **{num_clases} clases**. Para CADA clase debes incluir:
+    - **Clase N° X:** Título / Foco Específico.
+    - **Objetivo Específico de la Sesión.**
+    - **Secuencia de Actividades:** Inicio, Desarrollo y Cierre breves y concretos.
+    - **Ticket de Salida o Evaluación Formativa.**
+    Al final de la Unidad Didáctica, incluye la **📊 Evaluación Sumativa/Final** sugerida con su respectivo instrumento (rúbrica o pauta) y las **Adecuaciones DUA globales**.
 
     Usa un formato Markdown limpio, profesional y bien organizado con encabezados y viñetas.
     """
 
     prompt_usuario = f"""
     Genera una propuesta de planificación con los siguientes parámetros:
+    - **Docente:** {docente if docente else "No especificado"}
+    - **Establecimiento:** {colegio if colegio else "No especificado"}
     - **Nivel / Curso Específico:** {nivel}
     - **Asignatura:** {asignatura}
     - **Tipo de Planificación:** {tipo_planificacion}
+    - **Cantidad de Clases (si aplica):** {num_clases if "Unidad" in tipo_planificacion else "1 clase"}
     - **Tema / Objetivo Específico:** {enfoque}
     - **Consideraciones adicionales:** {observaciones if observaciones else "Ninguna especificada"}
     """
@@ -195,15 +204,16 @@ def generar_planificacion_ia(groq_api_key, nivel, asignatura, tipo_planificacion
             {"role": "user", "content": prompt_usuario},
         ],
         temperature=0.4,
-        max_tokens=2500,
+        max_tokens=3000,
     )
 
     return respuesta.choices[0].message.content
 
-def crear_documento_word(nivel, asignatura, tipo_planificacion, enfoque, observaciones, contenido):
-    """Crea un archivo Word (.docx) formateado con la planificación."""
+def crear_documento_word(docente, colegio, nivel, asignatura, tipo_planificacion, enfoque, observaciones, contenido):
+    """Crea un archivo Word (.docx) formateado con membrete institucional y planificación."""
     doc = Document()
 
+    # Título principal del documento
     p_titulo = doc.add_paragraph()
     run_titulo = p_titulo.add_run("PROPUESTA DE PLANIFICACIÓN PEDAGÓGICA")
     run_titulo.bold = True
@@ -211,14 +221,17 @@ def crear_documento_word(nivel, asignatura, tipo_planificacion, enfoque, observa
     run_titulo.font.color.rgb = RGBColor(0, 51, 102)
     p_titulo.paragraph_format.space_after = Pt(12)
 
-    tabla = doc.add_table(rows=4, cols=2)
+    # Tabla con metadatos de la planificación (Membrete institucional)
+    tabla = doc.add_table(rows=6, cols=2)
     tabla.style = "Table Grid"
 
     datos = [
+        ("Establecimiento Educacional:", colegio if colegio else "No especificado"),
+        ("Docente a Cargo:", docente if docente else "No especificado"),
         ("Nivel / Curso:", nivel),
         ("Asignatura:", asignatura),
         ("Tipo de Planificación:", tipo_planificacion),
-        ("Tema / Enfoque:", enfoque),
+        ("Tema / Enfoque Principal:", enfoque),
     ]
 
     for i, (campo, valor) in enumerate(datos):
@@ -243,6 +256,7 @@ def crear_documento_word(nivel, asignatura, tipo_planificacion, enfoque, observa
         p_obs.add_run(observaciones)
         p_obs.paragraph_format.space_after = Pt(12)
 
+    # Encabezado del contenido
     p_sub = doc.add_paragraph()
     run_sub = p_sub.add_run("Desarrollo de la Planificación")
     run_sub.bold = True
@@ -250,6 +264,7 @@ def crear_documento_word(nivel, asignatura, tipo_planificacion, enfoque, observa
     run_sub.font.color.rgb = RGBColor(0, 51, 102)
     p_sub.paragraph_format.space_after = Pt(8)
 
+    # Agregar líneas de texto con formato
     for linea in contenido.split("\n"):
         linea_str = linea.strip()
         if not linea_str:
@@ -286,20 +301,32 @@ def crear_documento_word(nivel, asignatura, tipo_planificacion, enfoque, observa
 def mostrar_seccion_planificaciones(groq_api_key, supabase_client):
     """Módulo del Generador de Planificaciones de Clase impulsado por IA."""
     st.title("📝 Generador de Planificaciones de Clase (IA)")
-    st.write("Diseña planificaciones pedagógicas completas alineadas con los estándares del MINEDUC usando Inteligencia Artificial.")
+    st.write("Diseña planificaciones pedagógicas individuales o unidades didácticas completas alineadas con el MINEDUC.")
 
     with st.expander("💡 **¿Cómo utilizar este generador? (Instructivo paso a paso)**", expanded=False):
         st.markdown(
             """
-            1. **Selecciona el Nivel y la Asignatura:** Elige el curso exacto (desde Prekínder a 4° Medio/EPJA) y el área de aprendizaje.
-            2. **Ingresa el Tema u Objetivo:** Escribe el contenido específico que deseas trabajar en la clase.
-            3. **Agrega Consideraciones (Opcional):** Anota detalles DUA, estudiantes en PIE o personalizaciones.
-            4. **Genera, Descarga y Comparte:** Al crear la clase podrás descargarla en Word (.docx) y compartirla en la **Biblioteca Comunitaria**.
+            1. **Datos Institucionales:** (Opcional) Ingresa tu nombre y establecimiento para personalizar el documento.
+            2. **Nivel, Asignatura y Modalidad:** Elige el curso y selecciona si deseas una clase individual o una **Unidad Didáctica de varias sesiones**.
+            3. **Ingresa el Tema u Objetivo:** Escribe el contenido o aprendizaje clave que abordarás.
+            4. **Genera y Comparte:** Descarga tu documento listo en Word (`.docx`) e invita a otros docentes compartiéndolo en la **Biblioteca Comunitaria**.
             """
         )
 
     st.markdown("---")
 
+    # --- SECCIÓN 1: DATOS INSTITUCIONALES Y DOCENTE ---
+    st.subheader("🏫 1. Datos Institucionales y Docente (Opcional)")
+    col_doc1, col_doc2 = st.columns(2)
+    with col_doc1:
+        docente = st.text_input("Nombre del Docente:", placeholder="Ej: Prof. María González")
+    with col_doc2:
+        colegio = st.text_input("Establecimiento Educacional:", placeholder="Ej: Liceo Bicentenario...")
+
+    st.markdown("---")
+
+    # --- SECCIÓN 2: PARÁMETROS DE LA PLANIFICACIÓN ---
+    st.subheader("📋 2. Parámetros Curriculares")
     col1, col2 = st.columns(2)
     with col1:
         nivel = st.selectbox(
@@ -327,10 +354,15 @@ def mostrar_seccion_planificaciones(groq_api_key, supabase_client):
             "Tipo de Planificación:",
             [
                 "Clase a Clase (90 minutos)",
-                "Unidad Didáctica (2 a 4 semanas)",
+                "Unidad Didáctica (Secuencia Multi-Sesión)",
                 "Planificación Anual (Visión General)",
             ],
         )
+
+        num_clases = 4
+        if tipo_planificacion == "Unidad Didáctica (Secuencia Multi-Sesión)":
+            num_clases = st.slider("Número de clases de la Unidad Didáctica:", min_value=2, max_value=8, value=4)
+
         enfoque = st.text_input(
             "Objetivo o Contenido Específico:",
             placeholder=f"Ej: {ejemplo_sugerido}",
@@ -354,11 +386,13 @@ def mostrar_seccion_planificaciones(groq_api_key, supabase_client):
             with st.spinner(f"Generando propuesta pedagógica de {asignatura} para {nivel}... Esto tomará unos segundos."):
                 try:
                     resultado_planificacion = generar_planificacion_ia(
-                        groq_api_key, nivel, asignatura, tipo_planificacion, enfoque, observaciones
+                        groq_api_key, docente, colegio, nivel, asignatura, tipo_planificacion, num_clases, enfoque, observaciones
                     )
 
                     st.session_state["resultado_planificacion"] = resultado_planificacion
                     st.session_state["datos_planificacion"] = {
+                        "docente": docente,
+                        "colegio": colegio,
                         "nivel": nivel,
                         "asignatura": asignatura,
                         "tipo": tipo_planificacion,
@@ -384,7 +418,7 @@ def mostrar_seccion_planificaciones(groq_api_key, supabase_client):
 
         with col_down:
             archivo_word = crear_documento_word(
-                datos["nivel"], datos["asignatura"], datos["tipo"], datos["enfoque"], datos["observaciones"], st.session_state["resultado_planificacion"]
+                datos["docente"], datos["colegio"], datos["nivel"], datos["asignatura"], datos["tipo"], datos["enfoque"], datos["observaciones"], st.session_state["resultado_planificacion"]
             )
             nombre_archivo = f"Planificacion_{datos['asignatura']}_{datos['nivel']}.docx".replace(" ", "_")
 
@@ -479,7 +513,7 @@ def mostrar_seccion_biblioteca(supabase_client):
                 st.markdown(item.get("contenido"))
                 
                 buf = crear_documento_word(
-                    item.get('nivel', 'N/A'), item.get('asignatura', 'N/A'), item.get('tipo', 'N/A'), item.get('enfoque', 'N/A'), '', item.get('contenido', '')
+                    '', '', item.get('nivel', 'N/A'), item.get('asignatura', 'N/A'), item.get('tipo', 'N/A'), item.get('enfoque', 'N/A'), '', item.get('contenido', '')
                 )
                 st.download_button(
                     label="📥 Descargar esta clase compartida en Word (.docx)",
@@ -502,7 +536,6 @@ def main():
     logo_encontrado = False
     for ruta in posibles_rutas:
         if os.path.exists(ruta):
-            # Fijamos width=180 para evitar que la imagen ocupe todo el espacio vertical
             st.sidebar.image(ruta, width=180)
             logo_encontrado = True
             break
@@ -530,7 +563,7 @@ def main():
     )
 
     st.sidebar.markdown("---")
-    st.sidebar.caption("🤖 **Planificador Docente v2.2**")
+    st.sidebar.caption("🤖 **Planificador Docente v2.3**")
     st.sidebar.caption("Chile — Red Solidaria & Normativa Laboral")
 
     if opcion == "📝 Generador de Planificaciones":
