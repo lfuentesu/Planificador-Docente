@@ -25,7 +25,7 @@ except ImportError:
 
 # Configuración inicial de la página
 st.set_page_config(
-    page_title="Planificador y Asistente Docente", page_icon="📚", layout="wide"
+    page_title="Planificador y Asistente Docente — SUTE Chile", page_icon="📚", layout="wide"
 )
 
 # --- INYECCIÓN DE ESTILOS CSS PERSONALIZADOS ---
@@ -49,13 +49,13 @@ st.markdown(
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
-    /* Tarjetas estilizadas para secciones */
-    div.stExpander, div[data-testid="stForm"] {
+    /* Tarjetas estilizadas para secciones y portada */
+    div.stExpander, div[data-testid="stForm"], .portada-card {
         background-color: #FFFFFF;
         border-radius: 12px;
         border: 1px solid #E2E8F0;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        padding: 10px;
+        padding: 20px;
     }
 
     /* Estilo para la barra lateral */
@@ -79,15 +79,16 @@ st.markdown(
         border-radius: 8px !important;
         border: none !important;
         font-weight: 600 !important;
-        padding: 0.6rem 1.2rem !important;
+        padding: 0.8rem 1.2rem !important;
         transition: all 0.3s ease;
         box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+        width: 100%;
     }
 
     div.stButton > button[kind="primary"]:hover {
         background-color: #1D4ED8 !important;
         box-shadow: 0 4px 8px rgba(29, 78, 216, 0.3);
-        transform: translateY(-1px);
+        transform: translateY(-2px);
     }
 
     /* Botón de descarga en Word */
@@ -99,6 +100,7 @@ st.markdown(
         font-weight: 600 !important;
         padding: 0.6rem 1.2rem !important;
         transition: all 0.3s ease;
+        width: 100%;
     }
 
     div.stDownloadButton > button:hover {
@@ -143,6 +145,21 @@ EJEMPLOS_OBJETIVOS = {
     "Orientación": "Promoción del respeto y la resolución pacífica de conflictos en la comunidad escolar",
 }
 
+def obtener_ruta_logo():
+    """Busca el archivo del logo en el repositorio."""
+    posibles_rutas = [
+        "logotiposute.jpg", "logotiposute.JPG", "logotiposute.jpeg", "logotiposute.png",
+        "logotposute.jpg", "legislacion/logotiposute.jpg", "assets/logotiposute.jpg",
+    ]
+    for ruta in posibles_rutas:
+        if os.path.exists(ruta):
+            return ruta
+    for raiz, carpetas, archivos in os.walk("."):
+        for archivo in archivos:
+            if "sute" in archivo.lower() and archivo.lower().endswith((".jpg", ".jpeg", ".png")):
+                return os.path.join(raiz, archivo)
+    return None
+
 def inicializar_supabase():
     """Inicializa la conexión con Supabase si las credenciales existen en Secrets."""
     url = st.secrets.get("SUPABASE_URL", os.getenv("SUPABASE_URL", ""))
@@ -182,6 +199,9 @@ def generar_planificacion_ia(groq_api_key, docente, colegio, nivel, asignatura, 
     - **Ticket de Salida o Evaluación Formativa.**
     Al final de la Unidad Didáctica, incluye la **📊 Evaluación Sumativa/Final** sugerida con su respectivo instrumento (rúbrica o pauta) y las **Adecuaciones DUA globales**.
 
+    Si el tipo es "Planificación Anual (Visión General)":
+    Organiza el año escolar en Semestres/Trimestres desglosando Unidades, Objetivos de Aprendizaje (OA) priorizados, meses estimados y estrategia evaluativa anual.
+
     Usa un formato Markdown limpio, profesional y bien organizado con encabezados y viñetas.
     """
 
@@ -213,7 +233,6 @@ def crear_documento_word(docente, colegio, nivel, asignatura, tipo_planificacion
     """Crea un archivo Word (.docx) formateado con membrete institucional y planificación."""
     doc = Document()
 
-    # Título principal del documento
     p_titulo = doc.add_paragraph()
     run_titulo = p_titulo.add_run("PROPUESTA DE PLANIFICACIÓN PEDAGÓGICA")
     run_titulo.bold = True
@@ -221,7 +240,6 @@ def crear_documento_word(docente, colegio, nivel, asignatura, tipo_planificacion
     run_titulo.font.color.rgb = RGBColor(0, 51, 102)
     p_titulo.paragraph_format.space_after = Pt(12)
 
-    # Tabla con metadatos de la planificación (Membrete institucional)
     tabla = doc.add_table(rows=6, cols=2)
     tabla.style = "Table Grid"
 
@@ -256,7 +274,6 @@ def crear_documento_word(docente, colegio, nivel, asignatura, tipo_planificacion
         p_obs.add_run(observaciones)
         p_obs.paragraph_format.space_after = Pt(12)
 
-    # Encabezado del contenido
     p_sub = doc.add_paragraph()
     run_sub = p_sub.add_run("Desarrollo de la Planificación")
     run_sub.bold = True
@@ -264,7 +281,6 @@ def crear_documento_word(docente, colegio, nivel, asignatura, tipo_planificacion
     run_sub.font.color.rgb = RGBColor(0, 51, 102)
     p_sub.paragraph_format.space_after = Pt(8)
 
-    # Agregar líneas de texto con formato
     for linea in contenido.split("\n"):
         linea_str = linea.strip()
         if not linea_str:
@@ -298,6 +314,60 @@ def crear_documento_word(docente, colegio, nivel, asignatura, tipo_planificacion
     buffer.seek(0)
     return buffer
 
+def mostrar_portada():
+    """Muestra la pantalla inicial (Landing Page) con el logo y los botones principales."""
+    ruta_logo = obtener_ruta_logo()
+    
+    col_cen1, col_cen2, col_cen3 = st.columns([1, 2, 1])
+    with col_cen2:
+        if ruta_logo:
+            st.image(ruta_logo, width=220)
+        
+        st.markdown("<h1 style='text-align: center;'>Plataforma Pedagógica y Sindical</h1>", unsafe_allow_html=True)
+        st.markdown("<h4 style='text-align: center; color: #475569;'>Sindicato Único de Trabajadores de la Educación (SUTE Chile)</h4>", unsafe_allow_html=True)
+        st.markdown("---")
+
+    st.write("")
+    st.markdown("<p style='text-align: center; font-size: 1.15rem; color: #334155;'>Selecciona el área a la que deseas ingresar:</p>", unsafe_allow_html=True)
+    st.write("")
+
+    col_btn1, col_btn2 = st.columns(2)
+
+    with col_btn1:
+        st.markdown(
+            """
+            <div class="portada-card" style="text-align: center;">
+                <h3 style="margin-bottom: 10px;">📝 Planificador Pedagógico</h3>
+                <p style="color: #475569; font-size: 0.95rem; min-height: 60px;">
+                    Diseña clases individuales, Unidades Didácticas multi-sesión y Planificaciones Anuales con Inteligencia Artificial alineada al MINEDUC.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        if st.button("🚀 Ir al Planificador Pedagógico", type="primary", key="btn_portada_planificar"):
+            st.session_state["menu_seleccionado"] = "📝 Generador de Planificaciones"
+            st.rerun()
+
+    with col_btn2:
+        st.markdown(
+            """
+            <div class="portada-card" style="text-align: center;">
+                <h3 style="margin-bottom: 10px;">⚖️ Asistente de Legislación Laboral</h3>
+                <p style="color: #475569; font-size: 0.95rem; min-height: 60px;">
+                    Consulta el Estatuto Docente, Código del Trabajo y la normativa jurídica vigente que resguarda tus derechos laborales.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        if st.button("⚖️ Ir al Consultor Jurídico", type="primary", key="btn_portada_juridico"):
+            st.session_state["menu_seleccionado"] = "⚖️ Asistente de Legislación Laboral"
+            st.rerun()
+
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.info("💡 **Espacio de Colaboración:** También puedes consultar y descargar materiales compartidos por colegas en la **📚 Biblioteca Comunitaria** desde el menú lateral.")
+
 def mostrar_seccion_planificaciones(groq_api_key, supabase_client):
     """Módulo del Generador de Planificaciones de Clase impulsado por IA."""
     st.title("📝 Generador de Planificaciones de Clase (IA)")
@@ -307,7 +377,7 @@ def mostrar_seccion_planificaciones(groq_api_key, supabase_client):
         st.markdown(
             """
             1. **Datos Institucionales:** (Opcional) Ingresa tu nombre y establecimiento para personalizar el documento.
-            2. **Nivel, Asignatura y Modalidad:** Elige el curso y selecciona si deseas una clase individual o una **Unidad Didáctica de varias sesiones**.
+            2. **Nivel, Asignatura y Modalidad:** Elige el curso y selecciona si deseas una clase individual, una **Unidad Didáctica** o una **Planificación Anual**.
             3. **Ingresa el Tema u Objetivo:** Escribe el contenido o aprendizaje clave que abordarás.
             4. **Genera y Comparte:** Descarga tu documento listo en Word (`.docx`) e invita a otros docentes compartiéndolo en la **Biblioteca Comunitaria**.
             """
@@ -315,7 +385,6 @@ def mostrar_seccion_planificaciones(groq_api_key, supabase_client):
 
     st.markdown("---")
 
-    # --- SECCIÓN 1: DATOS INSTITUCIONALES Y DOCENTE ---
     st.subheader("🏫 1. Datos Institucionales y Docente (Opcional)")
     col_doc1, col_doc2 = st.columns(2)
     with col_doc1:
@@ -325,7 +394,6 @@ def mostrar_seccion_planificaciones(groq_api_key, supabase_client):
 
     st.markdown("---")
 
-    # --- SECCIÓN 2: PARÁMETROS DE LA PLANIFICACIÓN ---
     st.subheader("📋 2. Parámetros Curriculares")
     col1, col2 = st.columns(2)
     with col1:
@@ -527,46 +595,47 @@ def main():
     groq_api_key = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY", ""))
     supabase_client = inicializar_supabase()
 
-    # --- BÚSQUEDA DEL LOGO Y CONTROL DE TAMAÑO EN LA BARRA LATERAL ---
-    posibles_rutas = [
-        "logotiposute.jpg", "logotiposute.JPG", "logotiposute.jpeg", "logotiposute.png",
-        "logotposute.jpg", "legislacion/logotiposute.jpg", "assets/logotiposute.jpg",
-    ]
+    # --- MOSTRAR LOGO EN LA BARRA LATERAL ---
+    ruta_logo = obtener_ruta_logo()
+    if ruta_logo:
+        st.sidebar.image(ruta_logo, width=180)
 
-    logo_encontrado = False
-    for ruta in posibles_rutas:
-        if os.path.exists(ruta):
-            st.sidebar.image(ruta, width=180)
-            logo_encontrado = True
-            break
-
-    if not logo_encontrado:
-        for raiz, carpetas, archivos in os.walk("."):
-            for archivo in archivos:
-                if "sute" in archivo.lower() and archivo.lower().endswith((".jpg", ".jpeg", ".png")):
-                    st.sidebar.image(os.path.join(raiz, archivo), width=180)
-                    logo_encontrado = True
-                    break
-            if logo_encontrado:
-                break
+    # Inicializar estado del menú si no existe
+    if "menu_seleccionado" not in st.session_state:
+        st.session_state["menu_seleccionado"] = "🏠 Portada / Inicio"
 
     st.sidebar.title("📌 Navegación")
     st.sidebar.markdown("---")
 
+    opciones_menu = [
+        "🏠 Portada / Inicio",
+        "📝 Generador de Planificaciones",
+        "📚 Biblioteca Comunitaria",
+        "⚖️ Asistente de Legislación Laboral",
+    ]
+
+    # Controlar el valor seleccionado en la barra lateral
+    idx_actual = opciones_menu.index(st.session_state["menu_seleccionado"]) if st.session_state["menu_seleccionado"] in opciones_menu else 0
+
     opcion = st.sidebar.radio(
         "Ir a:",
-        [
-            "📝 Generador de Planificaciones",
-            "📚 Biblioteca Comunitaria",
-            "⚖️ Asistente de Legislación Laboral",
-        ],
+        opciones_menu,
+        index=idx_actual,
+        key="radio_navegacion"
     )
 
-    st.sidebar.markdown("---")
-    st.sidebar.caption("🤖 **Planificador Docente v2.3**")
-    st.sidebar.caption("Chile — Red Solidaria & Normativa Laboral")
+    # Actualizar la sesión con la radio elegida
+    st.session_state["menu_seleccionado"] = opcion
 
-    if opcion == "📝 Generador de Planificaciones":
+    st.sidebar.markdown("---")
+    st.sidebar.caption("🤖 **Planificador Docente v2.4**")
+    st.sidebar.caption("Chile — SUTE Chile & Normativa Laboral")
+
+    # Renderizado según la selección
+    if opcion == "🏠 Portada / Inicio":
+        mostrar_portada()
+
+    elif opcion == "📝 Generador de Planificaciones":
         mostrar_seccion_planificaciones(groq_api_key, supabase_client)
 
     elif opcion == "📚 Biblioteca Comunitaria":
