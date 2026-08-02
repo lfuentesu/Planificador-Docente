@@ -22,6 +22,99 @@ st.set_page_config(
     page_title="Planificador y Asistente Docente", page_icon="📚", layout="wide"
 )
 
+# --- INYECCIÓN DE ESTILOS CSS PERSONALIZADOS ---
+st.markdown(
+    """
+    <style>
+    /* Estilo general del fondo */
+    .stApp {
+        background-color: #F8FAFC;
+    }
+
+    /* Encabezados principales */
+    h1 {
+        color: #1E3A8A !important;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-weight: 700 !important;
+    }
+    
+    h2, h3 {
+        color: #1E40AF !important;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Tarjetas estilizadas para secciones */
+    div.stExpander, div[data-testid="stForm"] {
+        background-color: #FFFFFF;
+        border-radius: 12px;
+        border: 1px solid #E2E8F0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        padding: 10px;
+    }
+
+    /* Estilo para la barra lateral */
+    section[data-testid="stSidebar"] {
+        background-color: #0F172A;
+    }
+
+    section[data-testid="stSidebar"] * {
+        color: #F8FAFC !important;
+    }
+
+    section[data-testid="stSidebar"] .stRadio label {
+        color: #E2E8F0 !important;
+        font-weight: 500;
+    }
+
+    /* Botones primarios (Generar / Descargar) */
+    div.stButton > button[kind="primary"] {
+        background-color: #2563EB !important;
+        color: white !important;
+        border-radius: 8px !important;
+        border: none !important;
+        font-weight: 600 !important;
+        padding: 0.6rem 1.2rem !important;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+    }
+
+    div.stButton > button[kind="primary"]:hover {
+        background-color: #1D4ED8 !important;
+        box-shadow: 0 4px 8px rgba(29, 78, 216, 0.3);
+        transform: translateY(-1px);
+    }
+
+    /* Botón de descarga en Word */
+    div.stDownloadButton > button {
+        background-color: #059669 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        border: none !important;
+        font-weight: 600 !important;
+        padding: 0.6rem 1.2rem !important;
+        transition: all 0.3s ease;
+    }
+
+    div.stDownloadButton > button:hover {
+        background-color: #047857 !important;
+        transform: translateY(-1px);
+    }
+
+    /* Cajas de texto y campos de selección */
+    .stTextInput>div>div>input, .stSelectbox>div>div>div, .stTextArea>div>div>textarea {
+        border-radius: 8px !important;
+        border: 1px solid #CBD5E1 !important;
+    }
+
+    /* Mensajes de éxito y alertas */
+    .stAlert {
+        border-radius: 10px !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 # Diccionario de ejemplos automáticos según la asignatura seleccionada
 EJEMPLOS_OBJETIVOS = {
     "Matemáticas": "Suma y resta de fracciones con distinto denominador",
@@ -309,7 +402,12 @@ def mostrar_seccion_planificaciones(groq_api_key):
     # Si ya hay un resultado generado en sesión, mostrarlo y ofrecer el botón de descarga
     if "resultado_planificacion" in st.session_state:
         st.markdown("### 📄 Propuesta Pedagógica")
-        st.markdown(st.session_state["resultado_planificacion"])
+        
+        # Envolver el contenido generado en una tarjeta visual blanca
+        st.markdown(
+            f'<div style="background-color: #FFFFFF; padding: 25px; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); margin-bottom: 20px;">{st.session_state["resultado_planificacion"]}</div>',
+            unsafe_allow_html=True,
+        )
 
         st.markdown("---")
         datos = st.session_state["datos_planificacion"]
@@ -333,7 +431,6 @@ def mostrar_seccion_planificaciones(groq_api_key):
             data=archivo_word,
             file_name=nombre_archivo,
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            type="primary",
         )
 
 
@@ -384,7 +481,7 @@ def main():
     )
 
     st.sidebar.markdown("---")
-    st.sidebar.caption("🤖 **Planificador Docente v1.8**")
+    st.sidebar.caption("🤖 **Planificador Docente v2.0**")
     st.sidebar.caption("Chile — Marco MINEDUC & Normativa Laboral")
 
     # Renderizado condicional según la selección del usuario
