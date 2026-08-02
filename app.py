@@ -293,8 +293,8 @@ def mostrar_seccion_planificaciones(groq_api_key, supabase_client):
             """
             1. **Selecciona el Nivel y la Asignatura:** Elige el curso exacto (desde Prekínder a 4° Medio/EPJA) y el área de aprendizaje.
             2. **Ingresa el Tema u Objetivo:** Escribe el contenido específico que deseas trabajar en la clase.
-            3. **Agrega Consideraciones (Opcional):** Anota detalles DUA, estudiantes en PIE o metodologías requeridas.
-            4. **Genera, Descarga y Comparte:** Al crear la clase podrás descargarla en Word (.docx) y solidarizar con la comunidad publicándola en la **Biblioteca Comunitaria**.
+            3. **Agrega Consideraciones (Opcional):** Anota detalles DUA, estudiantes en PIE o personalizaciones.
+            4. **Genera, Descarga y Comparte:** Al crear la clase podrás descargarla en Word (.docx) y compartirla en la **Biblioteca Comunitaria**.
             """
         )
 
@@ -380,7 +380,6 @@ def mostrar_seccion_planificaciones(groq_api_key, supabase_client):
 
         datos = st.session_state["datos_planificacion"]
 
-        # --- SECCIÓN DE DESCARGA Y MENSAJE DE SOLIDARIDAD ---
         col_down, col_pub = st.columns([1, 1])
 
         with col_down:
@@ -412,7 +411,6 @@ def mostrar_seccion_planificaciones(groq_api_key, supabase_client):
                     except Exception as e:
                         st.error(f"Error al guardar en la biblioteca: {e}")
                 else:
-                    # Guardado en sesión temporal si no se ha configurado la base de datos externa aún
                     if "biblioteca_local" not in st.session_state:
                         st.session_state["biblioteca_local"] = []
                     st.session_state["biblioteca_local"].append({
@@ -425,7 +423,6 @@ def mostrar_seccion_planificaciones(groq_api_key, supabase_client):
                     st.balloons()
                     st.success("¡Gracias por colaborar! La planificación quedó registrada para la comunidad.")
 
-        # --- TARJETA DE MENSAJE SOLIDARIO ---
         st.markdown(
             """
             <div class="solidaridad-card">
@@ -450,7 +447,6 @@ def mostrar_seccion_biblioteca(supabase_client):
     with col_f2:
         filtro_busqueda = st.text_input("Buscar por palabra clave:", placeholder="Ej: fracciones, independencia, celular...")
 
-    # Obtener planificaciones (desde Supabase o sesión local)
     lista_planificaciones = []
     if supabase_client:
         try:
@@ -461,7 +457,6 @@ def mostrar_seccion_biblioteca(supabase_client):
     else:
         lista_planificaciones = st.session_state.get("biblioteca_local", [])
 
-    # Filtrar resultados
     resultados = []
     for item in lista_planificaciones:
         cumple_asig = (filtro_asig == "Todas") or (item.get("asignatura") == filtro_asig)
@@ -483,7 +478,6 @@ def mostrar_seccion_biblioteca(supabase_client):
                 st.markdown("---")
                 st.markdown(item.get("contenido"))
                 
-                # Permitir descargar directamente cualquier clase del banco público
                 buf = crear_documento_word(
                     item.get('nivel', 'N/A'), item.get('asignatura', 'N/A'), item.get('tipo', 'N/A'), item.get('enfoque', 'N/A'), '', item.get('contenido', '')
                 )
@@ -499,7 +493,7 @@ def main():
     groq_api_key = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY", ""))
     supabase_client = inicializar_supabase()
 
-    # --- BÚSQUEDA DEL LOGO DE SUTE CHILE ---
+    # --- BÚSQUEDA DEL LOGO Y CONTROL DE TAMAÑO EN LA BARRA LATERAL ---
     posibles_rutas = [
         "logotiposute.jpg", "logotiposute.JPG", "logotiposute.jpeg", "logotiposute.png",
         "logotposute.jpg", "legislacion/logotiposute.jpg", "assets/logotiposute.jpg",
@@ -508,7 +502,8 @@ def main():
     logo_encontrado = False
     for ruta in posibles_rutas:
         if os.path.exists(ruta):
-            st.sidebar.image(ruta, use_container_width=True)
+            # Fijamos width=180 para evitar que la imagen ocupe todo el espacio vertical
+            st.sidebar.image(ruta, width=180)
             logo_encontrado = True
             break
 
@@ -516,7 +511,7 @@ def main():
         for raiz, carpetas, archivos in os.walk("."):
             for archivo in archivos:
                 if "sute" in archivo.lower() and archivo.lower().endswith((".jpg", ".jpeg", ".png")):
-                    st.sidebar.image(os.path.join(raiz, archivo), use_container_width=True)
+                    st.sidebar.image(os.path.join(raiz, archivo), width=180)
                     logo_encontrado = True
                     break
             if logo_encontrado:
@@ -535,7 +530,7 @@ def main():
     )
 
     st.sidebar.markdown("---")
-    st.sidebar.caption("🤖 **Planificador Docente v2.1**")
+    st.sidebar.caption("🤖 **Planificador Docente v2.2**")
     st.sidebar.caption("Chile — Red Solidaria & Normativa Laboral")
 
     if opcion == "📝 Generador de Planificaciones":
