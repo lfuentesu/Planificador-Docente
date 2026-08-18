@@ -314,6 +314,10 @@ def crear_documento_word(docente, colegio, nivel, asignatura, tipo_planificacion
     buffer.seek(0)
     return buffer
 
+def cambiar_seccion(destino):
+    """Callback para cambiar de sección de forma segura."""
+    st.session_state["menu_navegacion_radio"] = destino
+
 def mostrar_portada():
     """Muestra la pantalla inicial (Landing Page) con el logo y los botones principales."""
     ruta_logo = obtener_ruta_logo()
@@ -345,9 +349,13 @@ def mostrar_portada():
             """,
             unsafe_allow_html=True,
         )
-        if st.button("🚀 Ir al Planificador Pedagógico", type="primary", key="btn_portada_planificar"):
-            st.session_state["menu_navegacion_radio"] = "📝 Generador de Planificaciones"
-            st.rerun()
+        st.button(
+            "🚀 Ir al Planificador Pedagógico",
+            type="primary",
+            key="btn_portada_planificar",
+            on_click=cambiar_seccion,
+            args=("📝 Generador de Planificaciones",)
+        )
 
     with col_btn2:
         st.markdown(
@@ -361,9 +369,13 @@ def mostrar_portada():
             """,
             unsafe_allow_html=True,
         )
-        if st.button("⚖️ Ir al Consultor Jurídico", type="primary", key="btn_portada_juridico"):
-            st.session_state["menu_navegacion_radio"] = "⚖️ Asistente de Legislación Laboral"
-            st.rerun()
+        st.button(
+            "⚖️ Ir al Consultor Jurídico",
+            type="primary",
+            key="btn_portada_juridico",
+            on_click=cambiar_seccion,
+            args=("⚖️ Asistente de Legislación Laboral",)
+        )
 
     st.markdown("<br><br>", unsafe_allow_html=True)
     st.info("💡 **Espacio de Colaboración:** También puedes consultar y descargar materiales compartidos por colegas en la **📚 Biblioteca Comunitaria** desde el menú lateral.")
@@ -600,7 +612,7 @@ def main():
     if ruta_logo:
         st.sidebar.image(ruta_logo, width=180)
 
-    # Inicializar estado de navegación
+    # Inicializar estado de navegación si no existe
     if "menu_navegacion_radio" not in st.session_state:
         st.session_state["menu_navegacion_radio"] = "🏠 Portada / Inicio"
 
@@ -614,7 +626,7 @@ def main():
         "⚖️ Asistente de Legislación Laboral",
     ]
 
-    # Menú de radio en la barra lateral sincronizado mediante key
+    # Menú de navegación en la barra lateral
     opcion = st.sidebar.radio(
         "Ir a:",
         opciones_menu,
@@ -622,10 +634,10 @@ def main():
     )
 
     st.sidebar.markdown("---")
-    st.sidebar.caption("🤖 **Planificador Docente v2.5**")
+    st.sidebar.caption("🤖 **Planificador Docente v2.6**")
     st.sidebar.caption("Chile — SUTE Chile & Normativa Laboral")
 
-    # Renderizado según la selección activa
+    # Renderizado según la opción activa
     if opcion == "🏠 Portada / Inicio":
         mostrar_portada()
 
