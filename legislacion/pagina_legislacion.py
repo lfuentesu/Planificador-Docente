@@ -10,7 +10,7 @@ def obtener_groq_client():
     return None
 
 def consultar_legislacion_ia(client, pregunta):
-    """Consulta al modelo de IA sobre la legislación laboral docente en Chile usando modelos activos en Groq."""
+    """Consulta al modelo de IA sobre la legislación laboral docente en Chile."""
     prompt_sistema = """
     Eres un abogado especialista en Derecho Laboral Educacional y legislación docente en Chile.
     Tienes un conocimiento profundo del Estatuto Docente (Decreto con Fuerza de Ley N° 1 de 1996), el Código del Trabajo de Chile, la Ley de Inclusión, y los Decretos y Reglamentos del Ministerio de Educación (MINEDUC).
@@ -24,30 +24,18 @@ def consultar_legislacion_ia(client, pregunta):
     4. Mantener una postura de resguardo de los derechos laborales.
     """
 
-    # Modelos activos y garantizados en la API de Groq
-    modelos_disponibles = [
-        "llama-3.3-70b-versatile",
-        "llama-3.1-8b-instant"
-    ]
+    # Usamos el modelo principal oficial de Groq (el mismo que funciona en las planificaciones)
+    respuesta = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[
+            {"role": "system", "content": prompt_sistema},
+            {"role": "user", "content": pregunta},
+        ],
+        temperature=0.3,
+        max_tokens=2500,
+    )
 
-    ultimo_error = None
-    for modelo in modelos_disponibles:
-        try:
-            respuesta = client.chat.completions.create(
-                model=modelo,
-                messages=[
-                    {"role": "system", "content": prompt_sistema},
-                    {"role": "user", "content": pregunta},
-                ],
-                temperature=0.3,
-                max_tokens=2500,
-            )
-            return respuesta.choices[0].message.content
-        except Exception as e:
-            ultimo_error = e
-            continue
-
-    raise ultimo_error
+    return respuesta.choices[0].message.content
 
 def mostrar_seccion_legislacion():
     """Interfaz principal del Asistente de Legislación Laboral."""
