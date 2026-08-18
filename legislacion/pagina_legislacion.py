@@ -10,7 +10,7 @@ def obtener_groq_client():
     return None
 
 def consultar_legislacion_ia(client, pregunta):
-    """Consulta al modelo de IA sobre la legislación laboral docente en Chile probando modelos activos en Groq."""
+    """Consulta al modelo de IA sobre la legislación laboral docente en Chile usando modelos activos en Groq."""
     prompt_sistema = """
     Eres un abogado especialista en Derecho Laboral Educacional y legislación docente en Chile.
     Tienes un conocimiento profundo del Estatuto Docente (Decreto con Fuerza de Ley N° 1 de 1996), el Código del Trabajo de Chile, la Ley de Inclusión, y los Decretos y Reglamentos del Ministerio de Educación (MINEDUC).
@@ -24,11 +24,11 @@ def consultar_legislacion_ia(client, pregunta):
     4. Mantener una postura de resguardo de los derechos laborales.
     """
 
-    # Lista de modelos activos y respaldados vigentes en Groq (sin modelos deprecados)
+    # Modelos 100% vigentes y soportados por la API de Groq
     modelos_disponibles = [
         "llama-3.3-70b-versatile",
         "llama-3.1-8b-instant",
-        "mixtral-8x7b-32768"
+        "qwen-2.5-32b"
     ]
 
     ultimo_error = None
