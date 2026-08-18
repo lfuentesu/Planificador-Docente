@@ -346,7 +346,7 @@ def mostrar_portada():
             unsafe_allow_html=True,
         )
         if st.button("🚀 Ir al Planificador Pedagógico", type="primary", key="btn_portada_planificar"):
-            st.session_state["menu_seleccionado"] = "📝 Generador de Planificaciones"
+            st.session_state["menu_navegacion_radio"] = "📝 Generador de Planificaciones"
             st.rerun()
 
     with col_btn2:
@@ -362,7 +362,7 @@ def mostrar_portada():
             unsafe_allow_html=True,
         )
         if st.button("⚖️ Ir al Consultor Jurídico", type="primary", key="btn_portada_juridico"):
-            st.session_state["menu_seleccionado"] = "⚖️ Asistente de Legislación Laboral"
+            st.session_state["menu_navegacion_radio"] = "⚖️ Asistente de Legislación Laboral"
             st.rerun()
 
     st.markdown("<br><br>", unsafe_allow_html=True)
@@ -563,8 +563,8 @@ def mostrar_seccion_biblioteca(supabase_client):
     for item in lista_planificaciones:
         cumple_asig = (filtro_asig == "Todas") or (item.get("asignatura") == filtro_asig)
         cumple_txt = True
-        if filtro_busqueda.strip():
-            kw = filtro_busqueda.lower()
+        if filter_txt := filtro_busqueda.strip():
+            kw = filter_txt.lower()
             cumple_txt = (kw in item.get("enfoque", "").lower()) or (kw in item.get("contenido", "").lower())
         
         if cumple_asig and cumple_txt:
@@ -600,9 +600,9 @@ def main():
     if ruta_logo:
         st.sidebar.image(ruta_logo, width=180)
 
-    # Inicializar estado del menú si no existe
-    if "menu_seleccionado" not in st.session_state:
-        st.session_state["menu_seleccionado"] = "🏠 Portada / Inicio"
+    # Inicializar estado de navegación
+    if "menu_navegacion_radio" not in st.session_state:
+        st.session_state["menu_navegacion_radio"] = "🏠 Portada / Inicio"
 
     st.sidebar.title("📌 Navegación")
     st.sidebar.markdown("---")
@@ -614,24 +614,18 @@ def main():
         "⚖️ Asistente de Legislación Laboral",
     ]
 
-    # Controlar el valor seleccionado en la barra lateral
-    idx_actual = opciones_menu.index(st.session_state["menu_seleccionado"]) if st.session_state["menu_seleccionado"] in opciones_menu else 0
-
+    # Menú de radio en la barra lateral sincronizado mediante key
     opcion = st.sidebar.radio(
         "Ir a:",
         opciones_menu,
-        index=idx_actual,
-        key="radio_navegacion"
+        key="menu_navegacion_radio"
     )
 
-    # Actualizar la sesión con la radio elegida
-    st.session_state["menu_seleccionado"] = opcion
-
     st.sidebar.markdown("---")
-    st.sidebar.caption("🤖 **Planificador Docente v2.4**")
+    st.sidebar.caption("🤖 **Planificador Docente v2.5**")
     st.sidebar.caption("Chile — SUTE Chile & Normativa Laboral")
 
-    # Renderizado según la selección
+    # Renderizado según la selección activa
     if opcion == "🏠 Portada / Inicio":
         mostrar_portada()
 
