@@ -24,18 +24,29 @@ def consultar_legislacion_ia(client, pregunta):
     4. Mantener una postura de resguardo de los derechos laborales.
     """
 
-    # Usamos el modelo principal oficial de Groq (el mismo que funciona en las planificaciones)
-    respuesta = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[
-            {"role": "system", "content": prompt_sistema},
-            {"role": "user", "content": pregunta},
-        ],
-        temperature=0.3,
-        max_tokens=2500,
-    )
-
-    return respuesta.choices[0].message.content
+    # Intentamos primero con llama-3.1-70b-versatile y luego con llama-3.3-70b-specdec
+    try:
+        respuesta = client.chat.completions.create(
+            model="llama-3.1-70b-versatile",
+            messages=[
+                {"role": "system", "content": prompt_sistema},
+                {"role": "user", "content": pregunta},
+            ],
+            temperature=0.3,
+            max_tokens=2500,
+        )
+        return respuesta.choices[0].message.content
+    except Exception:
+        respuesta = client.chat.completions.create(
+            model="llama-3.3-70b-specdec",
+            messages=[
+                {"role": "system", "content": prompt_sistema},
+                {"role": "user", "content": pregunta},
+            ],
+            temperature=0.3,
+            max_tokens=2500,
+        )
+        return respuesta.choices[0].message.content
 
 def mostrar_seccion_legislacion():
     """Interfaz principal del Asistente de Legislación Laboral."""
