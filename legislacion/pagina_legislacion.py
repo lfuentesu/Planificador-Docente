@@ -24,11 +24,10 @@ def consultar_legislacion_ia(client, pregunta):
     4. Mantener una postura de resguardo de los derechos laborales.
     """
 
-    # Modelos 100% vigentes y soportados por la API de Groq
+    # Modelos activos y garantizados en la API de Groq
     modelos_disponibles = [
         "llama-3.3-70b-versatile",
-        "llama-3.1-8b-instant",
-        "qwen-2.5-32b"
+        "llama-3.1-8b-instant"
     ]
 
     ultimo_error = None
