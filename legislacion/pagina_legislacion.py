@@ -10,7 +10,7 @@ def obtener_groq_client():
     return None
 
 def consultar_legislacion_ia(client, pregunta):
-    """Consulta al modelo de IA sobre la legislación laboral docente en Chile."""
+    """Consulta al modelo de IA sobre la legislación laboral docente en Chile probando modelos activos."""
     prompt_sistema = """
     Eres un abogado especialista en Derecho Laboral Educacional y legislación docente en Chile.
     Tienes un conocimiento profundo del Estatuto Docente (Decreto con Fuerza de Ley N° 1 de 1996), el Código del Trabajo de Chile, la Ley de Inclusión, y los Decretos y Reglamentos del Ministerio de Educación (MINEDUC).
@@ -24,17 +24,31 @@ def consultar_legislacion_ia(client, pregunta):
     4. Mantener una postura de resguardo de los derechos laborales.
     """
 
-    respuesta = client.chat.completions.create(
-        model="llama3-70b-8192",  # Modelo estándar y estable de Groq
-        messages=[
-            {"role": "system", "content": prompt_sistema},
-            {"role": "user", "content": pregunta},
-        ],
-        temperature=0.3,
-        max_tokens=2500,
-    )
+    # Lista de modelos vigentes en Groq ordenados por prioridad
+    modelos_disponibles = [
+        "llama-3.3-70b-versatile",
+        "llama-3.1-70b-versatile",
+        "llama3-8b-8192"
+    ]
 
-    return respuesta.choices[0].message.content
+    ultimo_error = None
+    for modelo in modelos_disponibles:
+        try:
+            respuesta = client.chat.completions.create(
+                model=modelo,
+                messages=[
+                    {"role": "system", "content": prompt_sistema},
+                    {"role": "user", "content": pregunta},
+                ],
+                temperature=0.3,
+                max_tokens=2500,
+            )
+            return respuesta.choices[0].message.content
+        except Exception as e:
+            ultimo_error = e
+            continue
+
+    raise ultimo_error
 
 def mostrar_seccion_legislacion():
     """Interfaz principal del Asistente de Legislación Laboral."""
@@ -45,7 +59,7 @@ def mostrar_seccion_legislacion():
         st.markdown(
             """
             * **Derechos Laborales:** Horas lectivas vs. no lectivas, permiso administrativo, licencias médicas, causales de despido.
-            * **Estatuto Docente:** Carrera Docente, bonos, titularidad de horas, evaluaciones y sumarios administrativos.
+            * **Estatuto Docente:** Carrera Docente, bonos, asignación de dirección, titularidad de horas, evaluaciones y sumarios.
             * **Código del Trabajo:** Contratación, finiquito, fueros, horas extraordinarias y descansos.
             """
         )
@@ -73,7 +87,7 @@ def mostrar_seccion_legislacion():
     pregunta_usuario = st.text_area(
         "Escribe tu consulta jurídica o laboral aquí:",
         value=pregunta_rapida if pregunta_rapida else "",
-        placeholder="Ej: ¿Pueden obligarme a realizar turnos de patio durante mi hora de colación o no lectiva?",
+        placeholder="Ej: ¿Cuánto debiera recibir de sueldo un director de escuela básica o qué asignaciones le corresponden según la Ley de Carrera Docente?",
         height=120,
     )
 
